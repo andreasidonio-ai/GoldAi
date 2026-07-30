@@ -1,9 +1,10 @@
+import os
 import MetaTrader5 as mt5
 import logging
 
 class AccountHandler:
     def __init__(self):
-        pass
+        self.login = os.getenv("ACCOUNT")
 
     def get_account_info(self):
         info = mt5.account_info()

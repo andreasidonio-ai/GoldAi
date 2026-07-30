@@ -1,3 +1,5 @@
+import os
+from dotenv import load_dotenv
 import MetaTrader5 as mt5
 import pandas as pd
 import time
@@ -20,16 +22,30 @@ SYMBOL = "XAUUSD"
 TIMEFRAME = mt5.TIMEFRAME_M5
 BARS = 200
 
-# Initialize MT5
-if not mt5.initialize():
-    logging.error("MT5 initialization failed")
-    quit()
+# Load local .env (for local dev only — in production set env vars securely)
+load_dotenv()
+
+MT5_ACCOUNT = os.getenv("ACCOUNT")
+MT5_PASSWORD = os.getenv("MT5_PASSWORD")
+MT5_SERVER = os.getenv("MT5_SERVER")  # optional depending on broker
+
+if not MT5_ACCOUNT or not MT5_PASSWORD:
+    logging.error("Missing MT5 credentials. Set ACCOUNT and MT5_PASSWORD in environment or .env.")
+    raise SystemExit(1)
+
+# Initialize MT5 with login/password/server
+if not mt5.initialize(login=int(MT5_ACCOUNT), password=MT5_PASSWORD, server=MT5_SERVER):
+    logging.error(f"MT5 initialization failed: {mt5.last_error()}")
+    mt5.shutdown()
+    raise SystemExit(1)
+
+logging.info(f"MT5 initialized for account {MT5_ACCOUNT}")
 
 account = AccountHandler()
 acc_info = account.get_account_info()
 if not acc_info:
     logging.error("Account info retrieval failed")
-    quit()
+    raise SystemExit(1)
 
 # Load models
 classifier = StrategyClassifier()
